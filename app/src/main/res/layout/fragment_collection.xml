@@ -76,12 +76,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <EditText
+            android:id="@+id/search_box"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:textColor="@color/black"/>
+
         <com.waz.zclient.conversation.CollectionRecyclerView
             android:id="@+id/rv__collection"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/wire__padding__regular"
             android:layout_marginRight="@dimen/wire__padding__regular"
+            android:layout_marginTop="56dp"
             android:paddingBottom="@dimen/collections__content_bottom_padding"
             android:clipToPadding="false"
             />

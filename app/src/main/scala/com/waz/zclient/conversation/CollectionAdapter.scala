@@ -62,7 +62,6 @@ import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import org.threeten.bp._
 import org.threeten.bp.temporal.ChronoUnit
 
-//For now just handling images
 class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ViewHolder] with Injectable { adapter =>
 
   private implicit val tag: LogTag = logTagFor[CollectionAdapter]

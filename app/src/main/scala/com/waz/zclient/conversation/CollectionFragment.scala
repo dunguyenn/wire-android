@@ -21,11 +21,12 @@ import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.FragmentManager
 import android.support.v7.widget.Toolbar
+import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
-import android.widget.TextView
+import android.widget.{EditText, TextView}
 import com.waz.ZLog._
-import com.waz.api.Message
+import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.conversation.CollectionAdapter.AdapterState
@@ -47,6 +48,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
   lazy val controller = inject[CollectionController]
   lazy val messageActionsController = inject[MessageActionsController]
   var adapter: CollectionAdapter = null
+  var searchAdapter: SearchAdapter = null
 
   override def onDestroy(): Unit = {
     if (adapter != null) adapter.closeCursors()
@@ -74,6 +76,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     val recyclerView: CollectionRecyclerView = ViewUtils.getView(view, R.id.rv__collection)
     val emptyView: View = ViewUtils.getView(view, R.id.ll__collection__empty)
     val toolbar: Toolbar = ViewUtils.getView(view, R.id.t_toolbar)
+    val searchBoxView: EditText = ViewUtils.getView(view, R.id.search_box)
     emptyView.setVisibility(View.GONE)
 
     messageActionsController.onMessageAction.on(Threading.Ui){
@@ -88,6 +91,23 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
 
     adapter = new CollectionAdapter(recyclerView.viewDim)
     recyclerView.init(adapter)
+
+    searchAdapter = new SearchAdapter(recyclerView.viewDim)
+
+    searchBoxView.addTextChangedListener(new TextWatcher {
+      override def beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int): Unit = {}
+
+      override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): Unit = {
+        searchAdapter.contentSearchQuery ! ContentSearchQuery(s.toString)
+        if (s.length() == 0) {
+          recyclerView.setAdapter(adapter)
+        } else {
+          recyclerView.setAdapter(searchAdapter)
+        }
+      }
+
+      override def afterTextChanged(s: Editable): Unit = {}
+    })
 
     def setNavigationIconVisibility(visible: Boolean) = {
       if (visible) {

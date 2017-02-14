@@ -19,7 +19,7 @@ package com.waz.zclient.messages
 
 import com.waz.ZLog.ImplicitTag._
 import com.waz.ZLog._
-import com.waz.api.MessageFilter
+import com.waz.api.{ContentSearchQuery, MessageFilter}
 import com.waz.content.ConvMessagesIndex._
 import com.waz.content.{ConvMessagesIndex, MessagesCursor}
 import com.waz.model.{ConvId, MessageData}
@@ -136,3 +136,13 @@ object RecyclerCursor {
     def notifyItemRangeChanged(index: Int, length: Int): Unit
   }
 }
+/*
+class ConversationCursor(conv: ConvId, zms: ZMessaging, adapter: RecyclerNotifier, messageFilter: Option[MessageFilter] = None)(implicit inj: Injector, ev: EventContext) extends RecyclerCursor(conv, zms, adapter, messageFilter){
+  val index = messageFilter.fold(storage.msgsIndex(conv))(f => storage.msgsFilteredIndex(conv, f))
+  val lastReadTime = Signal.future(index).flatMap(_.signals.lastReadTime)
+}
+
+class CollectionCursor{
+
+}
+*/
