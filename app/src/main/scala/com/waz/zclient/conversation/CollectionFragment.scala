@@ -20,20 +20,23 @@ package com.waz.zclient.conversation
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.FragmentManager
-import android.support.v7.widget.Toolbar
+import android.support.v7.widget.RecyclerView.State
+import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.text.{Editable, TextWatcher}
-import android.view.View.OnClickListener
+import android.view.View.{OnClickListener, OnLayoutChangeListener}
 import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
 import android.widget.{EditText, TextView}
 import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.conversation.CollectionAdapter.AdapterState
 import com.waz.zclient.conversation.CollectionController._
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.views.MessageBottomSheetDialog.MessageAction
+import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
@@ -47,11 +50,12 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
 
   lazy val controller = inject[CollectionController]
   lazy val messageActionsController = inject[MessageActionsController]
-  var adapter: CollectionAdapter = null
+  lazy val accentColorController = inject[AccentColorController]
+  var collectionAdapter: CollectionAdapter = null
   var searchAdapter: SearchAdapter = null
 
   override def onDestroy(): Unit = {
-    if (adapter != null) adapter.closeCursors()
+    if (collectionAdapter != null) collectionAdapter.closeCursors()
     super.onDestroy()
   }
 
@@ -73,10 +77,11 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     val view = inflater.inflate(R.layout.fragment_collection, container, false)
     val name: TextView  = ViewUtils.getView(view, R.id.tv__collection_toolbar__name)
     val timestamp: TextView  = ViewUtils.getView(view, R.id.tv__collection_toolbar__timestamp)
-    val recyclerView: CollectionRecyclerView = ViewUtils.getView(view, R.id.rv__collection)
+    val collectionRecyclerView: CollectionRecyclerView = ViewUtils.getView(view, R.id.collection_list)
+    val searchRecyclerView: RecyclerView = ViewUtils.getView(view, R.id.search_results_list)
     val emptyView: View = ViewUtils.getView(view, R.id.ll__collection__empty)
     val toolbar: Toolbar = ViewUtils.getView(view, R.id.t_toolbar)
-    val searchBoxView: EditText = ViewUtils.getView(view, R.id.search_box)
+    val searchBoxView: TypefaceEditText = ViewUtils.getView(view, R.id.search_box)
     emptyView.setVisibility(View.GONE)
 
     messageActionsController.onMessageAction.on(Threading.Ui){
@@ -89,21 +94,40 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       case _ => closeSingleImage()
     }
 
-    adapter = new CollectionAdapter(recyclerView.viewDim)
-    recyclerView.init(adapter)
+    accentColorController.accentColor.on(Threading.Ui){ color =>
+      searchBoxView.setAccentColor(color.getColor())
+    }
 
-    searchAdapter = new SearchAdapter(recyclerView.viewDim)
+    collectionAdapter = new CollectionAdapter(collectionRecyclerView.viewDim)
+    collectionRecyclerView.init(collectionAdapter)
+
+    searchAdapter = new SearchAdapter()
+
+    searchRecyclerView.addOnLayoutChangeListener(new OnLayoutChangeListener {
+      override def onLayoutChange(v: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int): Unit = {
+        searchAdapter.notifyDataSetChanged()
+      }
+    })
+
+    searchRecyclerView.setLayoutManager(new LinearLayoutManager(getContext){
+      override def supportsPredictiveItemAnimations(): Boolean = true
+
+      override def onLayoutChildren(recycler: RecyclerView#Recycler, state: State): Unit = {
+        try{
+          super.onLayoutChildren(recycler, state)
+        } catch {
+          case ioob: IndexOutOfBoundsException => error("IOOB caught")
+        }
+
+      }
+    })
+    searchRecyclerView.setAdapter(searchAdapter)
 
     searchBoxView.addTextChangedListener(new TextWatcher {
       override def beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int): Unit = {}
 
       override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): Unit = {
         searchAdapter.contentSearchQuery ! ContentSearchQuery(s.toString)
-        if (s.length() == 0) {
-          recyclerView.setAdapter(adapter)
-        } else {
-          recyclerView.setAdapter(searchAdapter)
-        }
       }
 
       override def afterTextChanged(s: Editable): Unit = {}
@@ -123,26 +147,31 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
 
     controller.conversationName.on(Threading.Ui){ name.setText }
 
-    Signal(adapter.adapterState, controller.focusedItem).on(Threading.Ui) {
-      case (AdapterState(_, _, _), Some(messageData)) =>
+    Signal(collectionAdapter.adapterState, controller.focusedItem, searchAdapter.contentSearchQuery).on(Threading.Ui) {
+      case (AdapterState(_, _, _), Some(messageData), _) =>
         setNavigationIconVisibility(true)
         timestamp.setVisibility(View.VISIBLE)
         timestamp.setText(LocalDateTime.ofInstant(messageData.time, ZoneId.systemDefault()).toLocalDate.toString)
-      case (AdapterState(AllContent, 0, false), None) =>
+      case (_, _, query) if query.originalString.nonEmpty =>
+        collectionRecyclerView.setVisibility(View.GONE)
+        searchRecyclerView.setVisibility(View.VISIBLE)
+      case (AdapterState(AllContent, 0, false), None, _) =>
         emptyView.setVisibility(View.VISIBLE)
-        recyclerView.setVisibility(View.GONE)
+        collectionRecyclerView.setVisibility(View.GONE)
+        searchRecyclerView.setVisibility(View.GONE)
         setNavigationIconVisibility(false)
         timestamp.setVisibility(View.GONE)
-      case (AdapterState(contentMode, _, _), None) =>
+      case (AdapterState(contentMode, _, _), None, _) =>
         emptyView.setVisibility(View.GONE)
-        recyclerView.setVisibility(View.VISIBLE)
+        collectionRecyclerView.setVisibility(View.VISIBLE)
+        searchRecyclerView.setVisibility(View.GONE)
         setNavigationIconVisibility(contentMode != AllContent)
         timestamp.setVisibility(View.GONE)
       case _ =>
     }
 
-    adapter.contentMode.on(Threading.Ui){ _ =>
-      recyclerView.scrollToPosition(0)
+    collectionAdapter.contentMode.on(Threading.Ui){ _ =>
+      collectionRecyclerView.scrollToPosition(0)
     }
 
     toolbar.inflateMenu(R.menu.toolbar_collection)
@@ -168,7 +197,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
   }
 
   override def onBackPressed(): Boolean = {
-    val recyclerView: Option[CollectionRecyclerView] = Option(findById(R.id.rv__collection))
+    val recyclerView: Option[CollectionRecyclerView] = Option(findById(R.id.collection_list))
     recyclerView.foreach{ rv =>
       rv.stopScroll()
       rv.getSpanSizeLookup().clearCache()
@@ -177,7 +206,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       case fragment: SingleImageCollectionFragment => controller.focusedItem ! None; return true
       case _ =>
     }
-    if (!adapter.onBackPressed)
+    if (!collectionAdapter.onBackPressed)
       controller.closeCollection
     true
   }

@@ -27,11 +27,12 @@ import com.waz.api.ContentSearchQuery
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.MsgPart.Text
-import com.waz.zclient.messages.{MessageViewPart, MsgPart}
+import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.ui.utils.ColorUtils
+import com.waz.zclient.ui.utils.{ColorUtils, TextViewUtils}
 import com.waz.zclient.utils.ZTimeFormatter._
 import com.waz.zclient.utils.{DateConvertUtils, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
@@ -51,18 +52,20 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   val zms = inject[Signal[ZMessaging]]
   val accentColorController = inject[AccentColorController]
+  val usersController = inject[UsersController]
 
   lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
   lazy val infoTextView = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
+  lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatheadView]
 
-  val messageSignal = for{
+  val contentSignal = for{
     m <- message
-    q <- searchedQuery
+    q <- searchedQuery if q.toString().nonEmpty
     color <- accentColorController.accentColor
     nContent <- zms.flatMap(z => Signal.future(z.messagesIndexStorage.getNormalizedContentForMessage(m.id)))
   } yield (m, q, color, nContent)
 
-  messageSignal.on(Threading.Ui){
+  contentSignal.on(Threading.Ui){
     case (msg, query, color, Some(normalizedContent)) =>
       contentTextView.setText(getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor())))
     case (msg, query, color, None) =>
@@ -70,9 +73,17 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
     case _ =>
   }
 
-  message.on(Threading.Ui){ msg =>
-    val timeStr = getSeparatorTime(getContext, LocalDateTime.now, DateConvertUtils.asLocalDateTime(msg.time), DateFormat.is24HourFormat(getContext), ZoneId.systemDefault, true, false)
-    infoTextView.setText(timeStr)
+  val infoSignal = for{
+    m <- message
+    u <- usersController.user(m.userId)
+  } yield (m, u)
+
+  infoSignal.on(Threading.Ui){
+    case (msg, user) =>
+      val timeStr = getSeparatorTime(getContext, LocalDateTime.now, DateConvertUtils.asLocalDateTime(msg.time), DateFormat.is24HourFormat(getContext), ZoneId.systemDefault, true, false)
+      infoTextView.setText(TextViewUtils.getBoldText(getContext, s"[[${user.name}]] $timeStr"))
+      chatheadView.setUserId(msg.userId)
+    case _ =>
   }
 
   private def getHighlightedSpannableString(originalMessage: String, normalizedMessage: String, queries: Set[String], color: Int): SpannableString ={

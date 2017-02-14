@@ -76,14 +76,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <EditText
+        <com.waz.zclient.ui.text.TypefaceEditText
             android:id="@+id/search_box"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:textColor="@color/black"/>
+            android:layout_height="@dimen/search__edit_text__height"
+            android:textColor="?wirePrimaryTextColor"
+            android:background="@android:color/transparent"
+            android:layout_marginLeft="@dimen/wire__padding__16"
+            android:layout_marginRight="@dimen/wire__padding__16"
+            android:drawableStart="?conversationToolbarCollection"
+            android:drawablePadding="@dimen/wire__padding__8"
+            />
 
-        <com.waz.zclient.conversation.CollectionRecyclerView
-            android:id="@+id/rv__collection"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/wire__divider__height"
+            android:background="@color/light_graphite_40"
+            android:layout_marginTop="@dimen/search__edit_text__height"
+            />
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/search_results_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/wire__padding__regular"
@@ -91,6 +104,19 @@
             android:layout_marginTop="56dp"
             android:paddingBottom="@dimen/collections__content_bottom_padding"
             android:clipToPadding="false"
+            android:visibility="gone"
+            />
+
+        <com.waz.zclient.conversation.CollectionRecyclerView
+            android:id="@+id/collection_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="@dimen/wire__padding__regular"
+            android:layout_marginRight="@dimen/wire__padding__regular"
+            android:layout_marginTop="56dp"
+            android:paddingBottom="@dimen/collections__content_bottom_padding"
+            android:clipToPadding="false"
+            android:visibility="visible"
             />
 
         <LinearLayout

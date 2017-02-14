@@ -19,22 +19,45 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="56dp"
-    android:padding="8dp">
+    >
 
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/message_content"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
+    <com.waz.zclient.common.views.ChatheadView
+        android:id="@+id/chathead"
+        app:show_border="false"
+        android:layout_width="@dimen/search__chathead__size"
+        android:layout_height="@dimen/search__chathead__size"
+        android:layout_gravity="center_vertical"
         />
 
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/message_info"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingLeft="@dimen/wire__padding__8"
+        android:paddingRight="@dimen/wire__padding__8"
+        >
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/message_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="?wirePrimaryTextColor"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/message_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            />
+
+    </LinearLayout>
 
 </LinearLayout>

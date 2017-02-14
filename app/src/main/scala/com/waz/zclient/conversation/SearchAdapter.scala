@@ -39,7 +39,7 @@ import com.waz.zclient.{Injectable, Injector}
 /*
 TODO: some of this stuff is duplicated from MessagesListAdapter. Maybe there's a possibility of some refactoring and create a 'base adapter' for messageCursors
  */
-class SearchAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ViewHolder] with Injectable { adapter =>
+class SearchAdapter()(implicit context: Context, injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ViewHolder] with Injectable { adapter =>
 
   val zms = inject[Signal[ZMessaging]]
   val selectedConversation = inject[SelectionController].selectedConv
@@ -57,12 +57,17 @@ class SearchAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: 
     Some(c) <- conv
     query <- contentSearchQuery
   } yield
-    (new RecyclerCursor(c.id, zs, notifier, messageFilter = Some(MessageFilter(None, Some(query)))), c.convType)
+    new RecyclerCursor(c.id, zs, notifier, messageFilter = Some(MessageFilter(None, Some(query))))
 
   private var messages = Option.empty[RecyclerCursor]
   private var convId = ConvId()
 
-  cursor.on(Threading.Ui) { case (c, tpe) =>
+  val cursorLoader = for{
+    c <- cursor
+    true <- c.cursorLoaded
+  } yield c
+
+  cursorLoader.on(Threading.Ui) { c =>
     if (!messages.contains(c)) {
       verbose(s"cursor changed: ${c.count}")
       messages.foreach(_.close())
@@ -77,8 +82,7 @@ class SearchAdapter(viewDim: Signal[Dim2])(implicit context: Context, injector: 
   def message(position: Int) = messages.get.apply(position)
 
   override def getItemCount: Int = {
-    val count =  messages.fold(0)(_.count)
-    count
+    messages.fold(0)(_.count)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = {

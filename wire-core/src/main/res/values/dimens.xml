@@ -824,4 +824,7 @@
     <dimen name="collections__item_inner_padding">16dp</dimen>
     <dimen name="collections__small_text_line_size">8dp</dimen>
     <dimen name="collections__small_text_height">12dp</dimen>
+
+    <dimen name="search__chathead__size">32dp</dimen>
+    <dimen name="search__edit_text__height">48dp</dimen>
 </resources>
