@@ -24,7 +24,6 @@ import android.support.v4.app.{Fragment, FragmentActivity}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import com.waz.ZLog
 import com.waz.ZLog._
-import com.waz.threading.CancellableFuture
 import com.waz.utils.events._
 import com.waz.utils.returning
 

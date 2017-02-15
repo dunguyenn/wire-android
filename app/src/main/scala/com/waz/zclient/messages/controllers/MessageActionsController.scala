@@ -46,6 +46,8 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
 
+import scala.util.Success
+
 // TODO: rewrite to not use java message and asset api
 class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
   import com.waz.threading.Threading.Implicits.Ui
@@ -230,7 +232,10 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
     }
 
   private def revealMessageInConversation(message: Message) = {
-    zms.flatMap(z => Signal.future(z.messagesStorage.get(MessageId(message.getId)))){ messageToReveal ! _ }
+    zms.head.flatMap(z => z.messagesStorage.get(MessageId(message.getId))).onComplete{
+      case Success(msg) =>  messageToReveal ! msg
+      case _ =>
+    }
   }
 }
 

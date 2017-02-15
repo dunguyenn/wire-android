@@ -232,6 +232,8 @@
         <ignore path="src/main/res/layout/single_image_view_toolbar_layout.xml"/>
         <ignore path="*pin_bg.xml*"/>
         <ignore path="src/main/res/menu/toolbar_collection.xml"/>
+        <ignore path="src/main/res/layout/search_text_result_row.xml"/>
+        <ignore path="src/main/res/drawable/rounded_rectangle_solid_white.xml"/>
 
         <!--TODO Dean - leaving these here as design comes up with a new container-->
         <ignore path="*ic_action_soundcloud*"/>
@@ -255,6 +257,7 @@
         <ignore path="src/main/res/layout/row_collection*"/>
         <ignore path="src/main/res/layout/row_selectable_conversation.xml"/>
         <ignore path="src/main/res/layout/single_image_view_toolbar_layout.xml"/>
+        <ignore path="src/main/res/layout/search_text_result_row.xml"/>
     </issue>
     <issue id="EnforceUTF8" severity="error" />
     <issue id="ViewHolder" severity="error" />

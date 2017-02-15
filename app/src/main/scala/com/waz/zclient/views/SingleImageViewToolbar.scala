@@ -75,12 +75,6 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int) 
     }
   }
 
-  private lazy val messageActionCallback = new Callback {
-    override def onAction(action: MessageAction, message: Message): Unit = {
-      messageActionsController.onMessageAction ! (action, message)
-    }
-  }
-
   Seq(likeButton, downloadButton, shareButton, deleteButton, viewButton)
     .foreach(_.setPressedBackgroundColor(ContextCompat.getColor(getContext, R.color.light_graphite)))
 

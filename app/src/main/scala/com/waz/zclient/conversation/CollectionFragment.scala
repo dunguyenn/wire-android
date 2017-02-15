@@ -36,7 +36,7 @@ import com.waz.zclient.conversation.CollectionController._
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.views.MessageBottomSheetDialog.MessageAction
-import com.waz.zclient.ui.text.TypefaceEditText
+import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
@@ -82,7 +82,10 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     val emptyView: View = ViewUtils.getView(view, R.id.ll__collection__empty)
     val toolbar: Toolbar = ViewUtils.getView(view, R.id.t_toolbar)
     val searchBoxView: TypefaceEditText = ViewUtils.getView(view, R.id.search_box)
+    val searchBoxClose: GlyphTextView = ViewUtils.getView(view, R.id.search_close)
+    val searchBoxHint: TypefaceTextView = ViewUtils.getView(view, R.id.search_hint)
     emptyView.setVisibility(View.GONE)
+    timestamp.setVisibility(View.GONE)
 
     messageActionsController.onMessageAction.on(Threading.Ui){
       case (MessageAction.REVEAL, _) => controller.closeCollection; controller.focusedItem ! None
@@ -133,6 +136,12 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       override def afterTextChanged(s: Editable): Unit = {}
     })
 
+    searchBoxClose.setOnClickListener(new OnClickListener {
+      override def onClick(v: View): Unit = {
+        searchBoxView.setText("")
+      }
+    })
+
     def setNavigationIconVisibility(visible: Boolean) = {
       if (visible) {
         if (ThemeUtils.isDarkTheme(getContext)) {
@@ -155,18 +164,22 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       case (_, _, query) if query.originalString.nonEmpty =>
         collectionRecyclerView.setVisibility(View.GONE)
         searchRecyclerView.setVisibility(View.VISIBLE)
+        timestamp.setVisibility(View.GONE)
+        searchBoxHint.setVisibility(View.GONE)
       case (AdapterState(AllContent, 0, false), None, _) =>
         emptyView.setVisibility(View.VISIBLE)
         collectionRecyclerView.setVisibility(View.GONE)
         searchRecyclerView.setVisibility(View.GONE)
         setNavigationIconVisibility(false)
         timestamp.setVisibility(View.GONE)
+        searchBoxHint.setVisibility(View.VISIBLE)
       case (AdapterState(contentMode, _, _), None, _) =>
         emptyView.setVisibility(View.GONE)
         collectionRecyclerView.setVisibility(View.VISIBLE)
         searchRecyclerView.setVisibility(View.GONE)
         setNavigationIconVisibility(contentMode != AllContent)
         timestamp.setVisibility(View.GONE)
+        searchBoxHint.setVisibility(View.VISIBLE)
       case _ =>
     }
 

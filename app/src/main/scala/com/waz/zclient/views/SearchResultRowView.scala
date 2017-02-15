@@ -22,7 +22,9 @@ import android.text.SpannableString
 import android.text.format.DateFormat
 import android.text.style.BackgroundColorSpan
 import android.util.AttributeSet
+import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
+import com.waz.ZLog._
 import com.waz.api.ContentSearchQuery
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -30,11 +32,13 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.controllers.global.AccentColorController
 import com.waz.zclient.messages.MsgPart.Text
+import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
+import com.waz.zclient.pages.main.conversation.views.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, TextViewUtils}
 import com.waz.zclient.utils.ZTimeFormatter._
-import com.waz.zclient.utils.{DateConvertUtils, ViewUtils}
+import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
@@ -43,20 +47,26 @@ trait SearchResultRowView extends MessageViewPart with ViewHelper{
 }
 
 class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with SearchResultRowView{
+  import TextSearchResultRowView._
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
+  private implicit val tag: LogTag = logTagFor[TextSearchResultRowView]
   override val tpe: MsgPart = Text
 
   inflate(R.layout.search_text_result_row)
+  setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getResources.getDimensionPixelSize(R.dimen.search__result__height)))
+  setOrientation(LinearLayout.HORIZONTAL)
 
   val zms = inject[Signal[ZMessaging]]
   val accentColorController = inject[AccentColorController]
   val usersController = inject[UsersController]
+  val messageActionsController = inject[MessageActionsController]
 
   lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
   lazy val infoTextView = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
   lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatheadView]
+  lazy val resultsCount = ViewUtils.getView(this, R.id.search_result_count).asInstanceOf[TypefaceTextView]
 
   val contentSignal = for{
     m <- message
@@ -67,9 +77,17 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   contentSignal.on(Threading.Ui){
     case (msg, query, color, Some(normalizedContent)) =>
-      contentTextView.setText(getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor())))
+      val spannableString = getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()), StartEllipsisThreshold)
+      contentTextView.setText(spannableString._1)
+      resultsCount.setText(s"${spannableString._2}")
+      if (spannableString._2 <= 1) {
+        resultsCount.setVisibility(View.INVISIBLE)
+      } else {
+        resultsCount.setVisibility(View.VISIBLE)
+      }
     case (msg, query, color, None) =>
       contentTextView.setText(msg.contentString)
+      resultsCount.setVisibility(View.INVISIBLE)
     case _ =>
   }
 
@@ -86,7 +104,16 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
     case _ =>
   }
 
-  private def getHighlightedSpannableString(originalMessage: String, normalizedMessage: String, queries: Set[String], color: Int): SpannableString ={
+  val uiMessage = message.map(_.id) collect {
+    case id => ZMessaging.currentUi.messages.cachedOrNew(id)
+  }
+  uiMessage { _ =>  }
+
+  this.onClick{
+    uiMessage.currentValue.foreach(m => messageActionsController.onMessageAction ! (MessageAction.REVEAL, m))
+  }
+
+  private def getHighlightedSpannableString(originalMessage: String, normalizedMessage: String, queries: Set[String], color: Int, beginThreshold: Int = 0): (SpannableString, Int) ={
     def getQueryPosition(normalizedMessage: String, query: String, fromIndex: Int = 0, acc: Seq[(Int, Int)] = Seq()): Seq[(Int, Int)] ={
       val beginIndex = normalizedMessage.indexOf(query, fromIndex)
       if (beginIndex < 0) {
@@ -95,8 +122,19 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
       val endIndex = Math.min(beginIndex + query.length, normalizedMessage.length)
       getQueryPosition(normalizedMessage, query, endIndex, acc ++ Seq((beginIndex, endIndex)))
     }
-    val spannableString = new SpannableString(originalMessage)
-    queries.flatMap(getQueryPosition(normalizedMessage, _)).filter(_._1 >= 0).foreach(pos => spannableString.setSpan(new BackgroundColorSpan(color), pos._1, pos._2, 0))
-    spannableString
+    val matches = queries.flatMap(getQueryPosition(normalizedMessage, _)).filter(_._1 >= 0)
+    if (matches.isEmpty) {
+      return (new SpannableString(originalMessage), 0)
+    }
+    val minPos = Math.max(matches.map(_._1).min - beginThreshold, 0)
+    val ellipsis = if (minPos > 0) "..." else ""
+    val spannableString = new SpannableString(ellipsis + originalMessage.substring(minPos))
+    val offset = minPos - ellipsis.length
+    matches.foreach(pos => spannableString.setSpan(new BackgroundColorSpan(color), pos._1 - offset, pos._2 - offset, 0))
+    (spannableString, matches.size)
   }
+}
+
+object TextSearchResultRowView{
+  val StartEllipsisThreshold = 15
 }

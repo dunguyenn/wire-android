@@ -166,6 +166,7 @@
         <item name="wireBackgroundCollection">@color/collection_background_dark</item>
         <item name="collectionToolbar">@style/collection_toolbar__dark</item>
         <item name="lowerCollectionToolbar">@drawable/lower_toolbar_collection_background__dark</item>
+        <item name="searchBackgroundDividerDrawable">@drawable/search_bottom_divider_dark</item>
 
     </style>
 
@@ -313,6 +314,7 @@
         <item name="wireBackgroundCollection">@color/collection_background_light</item>
         <item name="collectionToolbar">@style/collection_toolbar__light</item>
         <item name="lowerCollectionToolbar">@drawable/lower_toolbar_collection_background__light</item>
+        <item name="searchBackgroundDividerDrawable">@drawable/search_bottom_divider_light</item>
 
     </style>
 

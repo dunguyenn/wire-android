@@ -811,7 +811,7 @@
     <dimen name="toolbar_home_icon_width">56dp</dimen>
 
     <dimen name="collections__content_horizontal_padding">@dimen/wire__padding__20</dimen>
-    <dimen name="collections__content_top_padding">24dp</dimen>
+    <dimen name="collections__content_top_padding">16dp</dimen>
     <dimen name="collections__content_bottom_padding">24dp</dimen>
     <dimen name="collections__header_height">56dp</dimen>
     <dimen name="collections__image_padding">0.5dp</dimen>
@@ -825,6 +825,11 @@
     <dimen name="collections__small_text_line_size">8dp</dimen>
     <dimen name="collections__small_text_height">12dp</dimen>
 
-    <dimen name="search__chathead__size">32dp</dimen>
+    <dimen name="search__result__height">56dp</dimen>
+    <dimen name="search__chathead__size">28dp</dimen>
     <dimen name="search__edit_text__height">48dp</dimen>
+    <dimen name="search__result__count_radius">10dp</dimen>
+    <dimen name="search__box__close_size">16dp</dimen>
+    <dimen name="search__result__counter_width">24dp</dimen>
+    <dimen name="search__result__counter_height">20dp</dimen>
 </resources>

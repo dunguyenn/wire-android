@@ -66,9 +66,8 @@
                 style="?conversationToolbar"
                 android:textSize="@dimen/wire__text_size__small"
                 />
+
         </LinearLayout>
-
-
 
     </android.support.v7.widget.Toolbar>
 
@@ -76,32 +75,58 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.waz.zclient.ui.text.TypefaceEditText
-            android:id="@+id/search_box"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="@dimen/search__edit_text__height"
-            android:textColor="?wirePrimaryTextColor"
-            android:background="@android:color/transparent"
-            android:layout_marginLeft="@dimen/wire__padding__16"
-            android:layout_marginRight="@dimen/wire__padding__16"
-            android:drawableStart="?conversationToolbarCollection"
-            android:drawablePadding="@dimen/wire__padding__8"
-            />
+            >
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/wire__divider__height"
-            android:background="@color/light_graphite_40"
-            android:layout_marginTop="@dimen/search__edit_text__height"
-            />
+            <com.waz.zclient.ui.text.TypefaceEditText
+                android:id="@+id/search_box"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textColor="?wirePrimaryTextColor"
+                android:paddingLeft="@dimen/wire__padding__16"
+                android:paddingRight="@dimen/wire__padding__16"
+                android:drawableStart="?conversationToolbarCollection"
+                android:drawablePadding="@dimen/wire__padding__8"
+                android:background="?searchBackgroundDividerDrawable"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/search_close"
+                android:layout_width="@dimen/search__box__close_size"
+                android:layout_height="@dimen/search__box__close_size"
+                android:textSize="@dimen/search__box__close_size"
+                android:textColor="?wirePrimaryTextColor"
+                android:text="@string/glyph__close"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/wire__padding__16"
+                android:layout_marginEnd="@dimen/wire__padding__16"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/search_hint"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:textColor="?wireSecondaryTextColor"
+                android:text="@string/search__box__hint_text"
+                app:font="@string/wire__typeface__regular"
+                android:textSize="@dimen/wire__text_size__small"
+                android:clickable="false"
+                android:focusable="false"
+                />
+
+        </RelativeLayout>
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/search_results_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="@dimen/wire__padding__regular"
-            android:layout_marginRight="@dimen/wire__padding__regular"
-            android:layout_marginTop="56dp"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginTop="@dimen/search__edit_text__height"
             android:paddingBottom="@dimen/collections__content_bottom_padding"
             android:clipToPadding="false"
             android:visibility="gone"
@@ -113,7 +138,7 @@
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/wire__padding__regular"
             android:layout_marginRight="@dimen/wire__padding__regular"
-            android:layout_marginTop="56dp"
+            android:layout_marginTop="@dimen/search__edit_text__height"
             android:paddingBottom="@dimen/collections__content_bottom_padding"
             android:clipToPadding="false"
             android:visibility="visible"

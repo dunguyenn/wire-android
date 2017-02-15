@@ -18,17 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:left="@dimen/wire__padding__16"
-          android:right="@dimen/wire__padding__16">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/separator_dark" />
-        </shape>
-    </item>
-
-    <item android:bottom="@dimen/wire__divider__height__thin">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/collection_background_dark" />
-        </shape>
-    </item>
-</layer-list>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FFFFFFFF" />
+    <corners android:radius="@dimen/search__result__count_radius" />
+</shape>

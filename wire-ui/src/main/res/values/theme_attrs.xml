@@ -143,5 +143,6 @@
     <attr name="wireBackgroundCollection" format="reference" />
     <attr name="collectionToolbar" format="reference" />
     <attr name="lowerCollectionToolbar" format="reference" />
+    <attr name="searchBackgroundDividerDrawable" format="reference" />
 
 </resources>
