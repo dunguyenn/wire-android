@@ -84,8 +84,22 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     val searchBoxView: TypefaceEditText = ViewUtils.getView(view, R.id.search_box)
     val searchBoxClose: GlyphTextView = ViewUtils.getView(view, R.id.search_close)
     val searchBoxHint: TypefaceTextView = ViewUtils.getView(view, R.id.search_hint)
+
+    def setNavigationIconVisibility(visible: Boolean) = {
+      if (visible) {
+        if (ThemeUtils.isDarkTheme(getContext)) {
+          toolbar.setNavigationIcon(R.drawable.action_back_light)
+        } else {
+          toolbar.setNavigationIcon(R.drawable.action_back_dark)
+        }
+      } else {
+        toolbar.setNavigationIcon(null)
+      }
+    }
+
     emptyView.setVisibility(View.GONE)
     timestamp.setVisibility(View.GONE)
+    setNavigationIconVisibility(false)
 
     messageActionsController.onMessageAction.on(Threading.Ui){
       case (MessageAction.REVEAL, _) => controller.closeCollection; controller.focusedItem ! None
@@ -126,11 +140,12 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     })
     searchRecyclerView.setAdapter(searchAdapter)
 
+    controller.contentSearchQuery.currentValue.foreach(q => searchBoxView.setText(q.originalString))
     searchBoxView.addTextChangedListener(new TextWatcher {
       override def beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int): Unit = {}
 
       override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): Unit = {
-        searchAdapter.contentSearchQuery ! ContentSearchQuery(s.toString)
+        controller.contentSearchQuery ! ContentSearchQuery(s.toString)
       }
 
       override def afterTextChanged(s: Editable): Unit = {}
@@ -142,21 +157,9 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       }
     })
 
-    def setNavigationIconVisibility(visible: Boolean) = {
-      if (visible) {
-        if (ThemeUtils.isDarkTheme(getContext)) {
-          toolbar.setNavigationIcon(R.drawable.action_back_light)
-        } else {
-          toolbar.setNavigationIcon(R.drawable.action_back_dark)
-        }
-      } else {
-        toolbar.setNavigationIcon(null)
-      }
-    }
-
     controller.conversationName.on(Threading.Ui){ name.setText }
 
-    Signal(collectionAdapter.adapterState, controller.focusedItem, searchAdapter.contentSearchQuery).on(Threading.Ui) {
+    Signal(collectionAdapter.adapterState, controller.focusedItem, controller.contentSearchQuery).on(Threading.Ui) {
       case (AdapterState(_, _, _), Some(messageData), _) =>
         setNavigationIconVisibility(true)
         timestamp.setVisibility(View.VISIBLE)
@@ -166,6 +169,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         searchRecyclerView.setVisibility(View.VISIBLE)
         timestamp.setVisibility(View.GONE)
         searchBoxHint.setVisibility(View.GONE)
+        searchBoxClose.setVisibility(View.VISIBLE)
       case (AdapterState(AllContent, 0, false), None, _) =>
         emptyView.setVisibility(View.VISIBLE)
         collectionRecyclerView.setVisibility(View.GONE)
@@ -173,6 +177,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         setNavigationIconVisibility(false)
         timestamp.setVisibility(View.GONE)
         searchBoxHint.setVisibility(View.VISIBLE)
+        searchBoxClose.setVisibility(View.GONE)
       case (AdapterState(contentMode, _, _), None, _) =>
         emptyView.setVisibility(View.GONE)
         collectionRecyclerView.setVisibility(View.VISIBLE)
@@ -180,6 +185,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         setNavigationIconVisibility(contentMode != AllContent)
         timestamp.setVisibility(View.GONE)
         searchBoxHint.setVisibility(View.VISIBLE)
+        searchBoxClose.setVisibility(View.GONE)
       case _ =>
     }
 
@@ -200,6 +206,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         item.getItemId match {
           case R.id.close =>
             controller.focusedItem ! None
+            controller.contentSearchQuery ! ContentSearchQuery.empty
             controller.closeCollection
             return true
         }
@@ -219,8 +226,10 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       case fragment: SingleImageCollectionFragment => controller.focusedItem ! None; return true
       case _ =>
     }
-    if (!collectionAdapter.onBackPressed)
+    if (!collectionAdapter.onBackPressed){
+      controller.contentSearchQuery ! ContentSearchQuery.empty
       controller.closeCollection
+    }
     true
   }
 }

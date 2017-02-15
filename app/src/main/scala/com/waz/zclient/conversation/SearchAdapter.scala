@@ -43,8 +43,7 @@ class SearchAdapter()(implicit context: Context, injector: Injector, eventContex
 
   val zms = inject[Signal[ZMessaging]]
   val selectedConversation = inject[SelectionController].selectedConv
-
-  val contentSearchQuery = Signal[ContentSearchQuery]()
+  val contentSearchQuery = inject[CollectionController].contentSearchQuery
 
   val conv = for {
     zs <- zms

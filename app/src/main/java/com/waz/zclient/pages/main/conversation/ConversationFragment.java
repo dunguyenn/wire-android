@@ -251,7 +251,13 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
             MenuInflater inflater = getActivity().getMenuInflater();
             leftMenu.getMenu().clear();
-            inflater.inflate(R.menu.conversation_header_menu_collection, leftMenu.getMenu());
+
+            boolean searchInProgress = !getCollectionController().contentSearchQuery().currentValue("").get().originalString().isEmpty();
+            if (searchInProgress) {
+                inflater.inflate(R.menu.conversation_header_menu_collection_searching, leftMenu.getMenu());
+            } else {
+                inflater.inflate(R.menu.conversation_header_menu_collection, leftMenu.getMenu());
+            }
 
             if (model.getType() == IConversation.Type.ONE_TO_ONE) {
                 toolbar.inflateMenu(R.menu.conversation_header_menu_video);

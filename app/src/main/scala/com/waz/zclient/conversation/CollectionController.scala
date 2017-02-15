@@ -21,7 +21,7 @@ import java.util
 import java.util.concurrent.CopyOnWriteArraySet
 
 import com.waz.ZLog._
-import com.waz.api.{IConversation, Message, TypeFilter}
+import com.waz.api.{ContentSearchQuery, IConversation, Message, TypeFilter}
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.SerialDispatchQueue
@@ -57,6 +57,8 @@ class CollectionController(implicit injector: Injector) extends Injectable {
   val openContextMenuForMessage = EventStream[MessageData]()
 
   val clickedMessage = EventStream[MessageData]()
+
+  val contentSearchQuery = Signal[ContentSearchQuery](ContentSearchQuery.empty)
 
   private def performOnObservers(func: (CollectionsObserver) => Unit) = {
     val collectionObservers: CopyOnWriteArraySet[CollectionsObserver] = new CopyOnWriteArraySet[CollectionsObserver](observers)
