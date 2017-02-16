@@ -144,6 +144,17 @@
             android:visibility="visible"
             />
 
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/no_search_results"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/search__no_results__top_margin"
+            android:text="@string/search__no_results"
+            android:textSize="@dimen/wire__text_size__regular"
+            app:font="@string/wire__typeface__regular"/>
+
         <LinearLayout
             android:id="@+id/ll__collection__empty"
             android:layout_width="match_parent"

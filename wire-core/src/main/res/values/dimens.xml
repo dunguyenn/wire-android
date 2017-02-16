@@ -832,4 +832,5 @@
     <dimen name="search__box__close_size">16dp</dimen>
     <dimen name="search__result__counter_width">24dp</dimen>
     <dimen name="search__result__counter_height">20dp</dimen>
+    <dimen name="search__no_results__top_margin">128dp</dimen>
 </resources>

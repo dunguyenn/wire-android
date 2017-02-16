@@ -24,7 +24,7 @@ import android.support.v7.widget.RecyclerView.State
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.text.{Editable, TextWatcher}
 import android.view.View.{OnClickListener, OnLayoutChangeListener}
-import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
+import android.view._
 import android.widget.{EditText, TextView}
 import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, Message}
@@ -38,6 +38,7 @@ import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.views.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
+import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
@@ -84,6 +85,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     val searchBoxView: TypefaceEditText = ViewUtils.getView(view, R.id.search_box)
     val searchBoxClose: GlyphTextView = ViewUtils.getView(view, R.id.search_close)
     val searchBoxHint: TypefaceTextView = ViewUtils.getView(view, R.id.search_hint)
+    val noSearchResultsText: TypefaceTextView = ViewUtils.getView(view, R.id.no_search_results)
 
     def setNavigationIconVisibility(visible: Boolean) = {
       if (visible) {
@@ -133,7 +135,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         try{
           super.onLayoutChildren(recycler, state)
         } catch {
-          case ioob: IndexOutOfBoundsException => error("IOOB caught")
+          case ioob: IndexOutOfBoundsException => error("IOOB caught") //XXX: I don't think this is needed anymore
         }
 
       }
@@ -154,6 +156,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     searchBoxClose.setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = {
         searchBoxView.setText("")
+        KeyboardUtils.closeKeyboardIfShown(getActivity)
       }
     })
 
@@ -170,6 +173,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         timestamp.setVisibility(View.GONE)
         searchBoxHint.setVisibility(View.GONE)
         searchBoxClose.setVisibility(View.VISIBLE)
+        emptyView.setVisibility(View.GONE)
       case (AdapterState(AllContent, 0, false), None, _) =>
         emptyView.setVisibility(View.VISIBLE)
         collectionRecyclerView.setVisibility(View.GONE)
@@ -178,6 +182,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         timestamp.setVisibility(View.GONE)
         searchBoxHint.setVisibility(View.VISIBLE)
         searchBoxClose.setVisibility(View.GONE)
+        noSearchResultsText.setVisibility(View.GONE)
       case (AdapterState(contentMode, _, _), None, _) =>
         emptyView.setVisibility(View.GONE)
         collectionRecyclerView.setVisibility(View.VISIBLE)
@@ -186,7 +191,15 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         timestamp.setVisibility(View.GONE)
         searchBoxHint.setVisibility(View.VISIBLE)
         searchBoxClose.setVisibility(View.GONE)
+        noSearchResultsText.setVisibility(View.GONE)
       case _ =>
+    }
+
+    Signal(searchAdapter.cursor.flatMap(_.countSignal), controller.contentSearchQuery).on(Threading.Ui) {
+      case (0, query) if query.originalString.nonEmpty =>
+        noSearchResultsText.setVisibility(View.VISIBLE)
+      case _ =>
+        noSearchResultsText.setVisibility(View.GONE)
     }
 
     collectionAdapter.contentMode.on(Threading.Ui){ _ =>
@@ -231,6 +244,16 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       controller.closeCollection
     }
     true
+  }
+
+  override def onStart(): Unit = {
+    super.onStart()
+    getActivity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+  }
+
+  override def onStop(): Unit = {
+    super.onStop()
+    getActivity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
   }
 }
 
