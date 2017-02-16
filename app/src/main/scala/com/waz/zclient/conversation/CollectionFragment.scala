@@ -25,6 +25,8 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.text.{Editable, TextWatcher}
 import android.view.View.{OnClickListener, OnLayoutChangeListener}
 import android.view._
+import android.view.inputmethod.EditorInfo
+import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, TextView}
 import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, Message}
@@ -61,6 +63,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
   }
 
   private def showSingleImage() = {
+    KeyboardUtils.closeKeyboardIfShown(getActivity)
     getChildFragmentManager.findFragmentByTag(SingleImageCollectionFragment.TAG) match {
       case null => getChildFragmentManager.beginTransaction.add(R.id.fl__collection_content, SingleImageCollectionFragment.newInstance(), SingleImageCollectionFragment.TAG).addToBackStack(SingleImageCollectionFragment.TAG).commit
       case _ =>
@@ -131,6 +134,13 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     searchRecyclerView.setLayoutManager(new LinearLayoutManager(getContext){
       override def supportsPredictiveItemAnimations(): Boolean = true
 
+      override def onScrollStateChanged(state: Int): Unit = {
+        super.onScrollStateChanged(state)
+        if (state == RecyclerView.SCROLL_STATE_DRAGGING){
+          KeyboardUtils.closeKeyboardIfShown(getActivity)
+        }
+      }
+
       override def onLayoutChildren(recycler: RecyclerView#Recycler, state: State): Unit = {
         try{
           super.onLayoutChildren(recycler, state)
@@ -147,10 +157,22 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       override def beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int): Unit = {}
 
       override def onTextChanged(s: CharSequence, start: Int, before: Int, count: Int): Unit = {
-        controller.contentSearchQuery ! ContentSearchQuery(s.toString)
+        if (s.toString.trim.length() <= 1) {
+          controller.contentSearchQuery ! ContentSearchQuery.empty
+        } else {
+          controller.contentSearchQuery ! ContentSearchQuery(s.toString)
+        }
       }
 
       override def afterTextChanged(s: Editable): Unit = {}
+    })
+    searchBoxView.asInstanceOf[EditText].setOnEditorActionListener(new OnEditorActionListener {
+      override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
+          KeyboardUtils.closeKeyboardIfShown(getActivity)
+        }
+        true
+      }
     })
 
     searchBoxClose.setOnClickListener(new OnClickListener {
@@ -163,7 +185,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     controller.conversationName.on(Threading.Ui){ name.setText }
 
     Signal(collectionAdapter.adapterState, controller.focusedItem, controller.contentSearchQuery).on(Threading.Ui) {
-      case (AdapterState(_, _, _), Some(messageData), _) =>
+      case (AdapterState(_, _, _), Some(messageData), _) if messageData.msgType == Message.Type.ASSET =>
         setNavigationIconVisibility(true)
         timestamp.setVisibility(View.VISIBLE)
         timestamp.setText(LocalDateTime.ofInstant(messageData.time, ZoneId.systemDefault()).toLocalDate.toString)
@@ -195,7 +217,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       case _ =>
     }
 
-    Signal(searchAdapter.cursor.flatMap(_.countSignal), controller.contentSearchQuery).on(Threading.Ui) {
+    Signal(searchAdapter.cursor.flatMap(_.countSignal).orElse(Signal(-1)), controller.contentSearchQuery).on(Threading.Ui) {
       case (0, query) if query.originalString.nonEmpty =>
         noSearchResultsText.setVisibility(View.VISIBLE)
       case _ =>

@@ -54,6 +54,7 @@
                 android:textColor="?wirePrimaryTextColor"
                 android:maxLines="1"
                 android:ellipsize="end"
+                app:font="@string/wire__typeface__light"
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView

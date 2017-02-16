@@ -85,11 +85,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:textColor="?wirePrimaryTextColor"
-                android:paddingLeft="@dimen/wire__padding__16"
-                android:paddingRight="@dimen/wire__padding__16"
+                android:paddingLeft="@dimen/wire__padding__20"
+                android:paddingRight="@dimen/wire__padding__20"
                 android:drawableStart="?conversationToolbarCollection"
-                android:drawablePadding="@dimen/wire__padding__8"
+                android:drawablePadding="@dimen/wire__padding__22"
                 android:background="?searchBackgroundDividerDrawable"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:maxLines="1"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                app:font="@string/wire__typeface__light"
                 />
 
             <com.waz.zclient.ui.text.GlyphTextView
