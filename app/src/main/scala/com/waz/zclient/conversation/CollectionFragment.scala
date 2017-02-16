@@ -105,9 +105,15 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     emptyView.setVisibility(View.GONE)
     timestamp.setVisibility(View.GONE)
     setNavigationIconVisibility(false)
+    controller.focusedItem ! None
 
     messageActionsController.onMessageAction.on(Threading.Ui){
-      case (MessageAction.REVEAL, _) => controller.closeCollection; controller.focusedItem ! None
+      case (MessageAction.REVEAL, _) =>
+        controller.closeCollection
+        controller.focusedItem.mutate {
+          case Some(m) if m.msgType == Message.Type.ASSET => None
+          case m => m
+        }
       case _ =>
     }
 

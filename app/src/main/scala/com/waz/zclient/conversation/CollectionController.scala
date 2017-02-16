@@ -20,6 +20,8 @@ package com.waz.zclient.conversation
 import java.util
 import java.util.concurrent.CopyOnWriteArraySet
 
+import android.text.SpannableString
+import android.text.style.BackgroundColorSpan
 import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, IConversation, Message, TypeFilter}
 import com.waz.model._
@@ -123,5 +125,28 @@ object CollectionController {
       TypeFilter(Message.Type.RICH_MEDIA, Some(3)),
       TypeFilter(Message.Type.ANY_ASSET, Some(3))
     )
+  }
+}
+
+object CollectionUtils {
+  def getHighlightedSpannableString(originalMessage: String, normalizedMessage: String, queries: Set[String], color: Int, beginThreshold: Int = -1): (SpannableString, Int) ={
+    def getQueryPosition(normalizedMessage: String, query: String, fromIndex: Int = 0, acc: Seq[(Int, Int)] = Seq()): Seq[(Int, Int)] ={
+      val beginIndex = normalizedMessage.indexOf(query, fromIndex)
+      if (beginIndex < 0) {
+        return acc
+      }
+      val endIndex = Math.min(beginIndex + query.length, normalizedMessage.length)
+      getQueryPosition(normalizedMessage, query, endIndex, acc ++ Seq((beginIndex, endIndex)))
+    }
+    val matches = queries.flatMap(getQueryPosition(normalizedMessage, _)).filter(_._1 >= 0)
+    if (matches.isEmpty) {
+      return (new SpannableString(originalMessage), 0)
+    }
+    val minPos = if (beginThreshold == -1) 0 else Math.max(matches.map(_._1).min - beginThreshold, 0)
+    val ellipsis = if (minPos > 0) "..." else ""
+    val spannableString = new SpannableString(ellipsis + originalMessage.substring(minPos))
+    val offset = minPos - ellipsis.length
+    matches.foreach(pos => spannableString.setSpan(new BackgroundColorSpan(color), pos._1 - offset, pos._2 - offset, 0))
+    (spannableString, matches.size)
   }
 }

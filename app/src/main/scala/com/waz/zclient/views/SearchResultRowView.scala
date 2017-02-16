@@ -31,6 +31,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ChatheadView
 import com.waz.zclient.controllers.global.AccentColorController
+import com.waz.zclient.conversation.{CollectionController, CollectionUtils}
 import com.waz.zclient.messages.MsgPart.Text
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
@@ -62,6 +63,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
   val accentColorController = inject[AccentColorController]
   val usersController = inject[UsersController]
   val messageActionsController = inject[MessageActionsController]
+  val collectionController = inject[CollectionController]
 
   lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
   lazy val infoTextView = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
@@ -77,7 +79,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   contentSignal.on(Threading.Ui){
     case (msg, query, color, Some(normalizedContent)) =>
-      val spannableString = getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()), StartEllipsisThreshold)
+      val spannableString = CollectionUtils.getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()), StartEllipsisThreshold)
       contentTextView.setText(spannableString._1)
       resultsCount.setText(s"${spannableString._2}")
       if (spannableString._2 <= 1) {
@@ -110,28 +112,8 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
   uiMessage { _ =>  }
 
   this.onClick{
+    collectionController.focusedItem ! message.currentValue
     uiMessage.currentValue.foreach(m => messageActionsController.onMessageAction ! (MessageAction.REVEAL, m))
-  }
-
-  private def getHighlightedSpannableString(originalMessage: String, normalizedMessage: String, queries: Set[String], color: Int, beginThreshold: Int = 0): (SpannableString, Int) ={
-    def getQueryPosition(normalizedMessage: String, query: String, fromIndex: Int = 0, acc: Seq[(Int, Int)] = Seq()): Seq[(Int, Int)] ={
-      val beginIndex = normalizedMessage.indexOf(query, fromIndex)
-      if (beginIndex < 0) {
-        return acc
-      }
-      val endIndex = Math.min(beginIndex + query.length, normalizedMessage.length)
-      getQueryPosition(normalizedMessage, query, endIndex, acc ++ Seq((beginIndex, endIndex)))
-    }
-    val matches = queries.flatMap(getQueryPosition(normalizedMessage, _)).filter(_._1 >= 0)
-    if (matches.isEmpty) {
-      return (new SpannableString(originalMessage), 0)
-    }
-    val minPos = Math.max(matches.map(_._1).min - beginThreshold, 0)
-    val ellipsis = if (minPos > 0) "..." else ""
-    val spannableString = new SpannableString(ellipsis + originalMessage.substring(minPos))
-    val offset = minPos - ellipsis.length
-    matches.foreach(pos => spannableString.setSpan(new BackgroundColorSpan(color), pos._1 - offset, pos._2 - offset, 0))
-    (spannableString, matches.size)
   }
 }
 
