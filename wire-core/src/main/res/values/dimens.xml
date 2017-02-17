@@ -168,7 +168,6 @@
     <dimen name="wire__padding__16">16dp</dimen>
     <dimen name="wire__padding__18">18dp</dimen>
     <dimen name="wire__padding__20">20dp</dimen>
-    <dimen name="wire__padding__22">22dp</dimen>
     <dimen name="wire__padding__26">26dp</dimen>
     <dimen name="wire__padding__32">32dp</dimen>
     <dimen name="wire__padding__regular">16dp</dimen>
@@ -834,4 +833,7 @@
     <dimen name="search__result__counter_width">24dp</dimen>
     <dimen name="search__result__counter_height">20dp</dimen>
     <dimen name="search__no_results__top_margin">128dp</dimen>
+    <dimen name="search__box__padding">20dp</dimen>
+    <dimen name="search__box_drawable__padding">22dp</dimen>
+    <dimen name="search__box_close__margin">12dp</dimen>
 </resources>

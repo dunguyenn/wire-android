@@ -42,6 +42,7 @@ import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextVie
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
@@ -173,11 +174,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         } else {
           controller.contentSearchQuery ! ContentSearchQuery(s.toString)
         }
-        if (s.toString.nonEmpty){
-          searchBoxClose.setVisibility(View.VISIBLE)
-        } else {
-          searchBoxClose.setVisibility(View.GONE)
-        }
+        searchBoxClose.setVisible(s.toString.nonEmpty)
       }
 
       override def afterTextChanged(s: Editable): Unit = {}
@@ -201,11 +198,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     })
     searchBoxView.setOnFocusChangeListener(new OnFocusChangeListener {
       override def onFocusChange(v: View, hasFocus: Boolean): Unit = {
-        if (!hasFocus && searchBoxView.getText.length() == 0) {
-          searchBoxHint.setVisibility(View.VISIBLE)
-        } else {
-          searchBoxHint.setVisibility(View.GONE)
-        }
+        searchBoxHint.setVisible(!hasFocus && searchBoxView.getText.length() == 0)
       }
     })
 
@@ -296,16 +289,6 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       controller.closeCollection
     }
     true
-  }
-
-  override def onStart(): Unit = {
-    super.onStart()
-    getActivity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
-  }
-
-  override def onStop(): Unit = {
-    super.onStop()
-    getActivity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
   }
 }
 

@@ -27,7 +27,7 @@
         app:show_border="false"
         android:layout_width="@dimen/search__chathead__size"
         android:layout_height="@dimen/search__chathead__size"
-        android:layout_marginEnd="@dimen/wire__padding__16"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
         android:layout_gravity="center_vertical"
         />
 
@@ -74,8 +74,8 @@
             android:backgroundTint="@color/light_graphite"
             android:layout_width="@dimen/search__result__counter_width"
             android:layout_height="@dimen/search__result__counter_height"
-            android:layout_marginRight="@dimen/wire__padding__16"
-            android:layout_marginLeft="@dimen/wire__padding__16"
+            android:layout_marginRight="@dimen/wire__padding__regular"
+            android:layout_marginLeft="@dimen/wire__padding__regular"
             android:layout_gravity="center_vertical"
             android:gravity="center"
             android:textAlignment="center"
