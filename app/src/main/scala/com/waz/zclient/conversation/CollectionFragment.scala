@@ -163,6 +163,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       if (q.originalString.nonEmpty) {
         searchBoxView.setText(q.originalString)
         searchBoxHint.setVisibility(View.GONE)
+        searchBoxClose.setVisibility(View.VISIBLE)
       }
     }
     searchBoxView.addTextChangedListener(new TextWatcher {
