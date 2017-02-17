@@ -233,7 +233,7 @@
         <ignore path="*pin_bg.xml*"/>
         <ignore path="src/main/res/menu/toolbar_collection.xml"/>
         <ignore path="src/main/res/layout/search_text_result_row.xml"/>
-        <ignore path="src/main/res/drawable/rounded_rectangle_solid_white.xml"/>
+        <ignore path="src/main/res/drawable/search_result_counter_background.xml"/>
 
         <!--TODO Dean - leaving these here as design comes up with a new container-->
         <ignore path="*ic_action_soundcloud*"/>

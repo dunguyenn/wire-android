@@ -70,8 +70,7 @@
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/search_result_count"
-            android:background="@drawable/rounded_rectangle_solid_white"
-            android:backgroundTint="@color/light_graphite"
+            android:background="@drawable/search_result_counter_background"
             android:layout_width="@dimen/search__result__counter_width"
             android:layout_height="@dimen/search__result__counter_height"
             android:layout_marginRight="@dimen/wire__padding__regular"
