@@ -67,12 +67,12 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     searchedMessage <- collectionController.focusedItem
     query <- collectionController.contentSearchQuery
     color <- accentColorController.accentColor
-    normalizedMessage <- zms.flatMap(z => Signal.future(z.messagesIndexStorage.getNormalizedContentForMessage(searchedMessage.fold(MessageId())(_.id))))
+    normalizedMessage <- zms.flatMap(z => Signal.future(z.messagesIndexStorage.getNormalizedContentForMessage(messageData.id)))
   } yield (messageData, part, searchedMessage, query, color, normalizedMessage)
 
   messageSignal.on(Threading.Ui){
-    case (messageData, part, Some(searchedMessage), query, color, Some(normalizedMessage)) if query.originalString.nonEmpty && messageData.id.equals(searchedMessage.id) =>
-      animator.start()
+    case (messageData, part, Some(searchedMessage), query, color, Some(normalizedMessage)) if query.originalString.nonEmpty =>
+      if (messageData.id.equals(searchedMessage.id)) animator.start()
       val spannable = CollectionUtils.getHighlightedSpannableString(messageData.contentString, normalizedMessage, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()))._1
       setText(spannable)
     case (messageData, part, _, _, _, _) =>
