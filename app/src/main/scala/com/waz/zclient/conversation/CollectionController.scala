@@ -85,6 +85,11 @@ class CollectionController(implicit injector: Injector) extends Injectable {
   def addObserver(collectionsObserver: CollectionsObserver): Unit = observers.add(collectionsObserver)
 
   def removeObserver(collectionsObserver: CollectionsObserver): Unit = observers.remove(collectionsObserver)
+
+  def clearSearch() = {
+    focusedItem ! None
+    contentSearchQuery ! ContentSearchQuery.empty
+  }
 }
 
 object CollectionController {

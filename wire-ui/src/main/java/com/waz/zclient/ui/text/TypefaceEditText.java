@@ -21,10 +21,15 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
+import android.view.View;
+
 import com.waz.zclient.ui.R;
 import com.waz.zclient.ui.utils.TypefaceUtils;
 
 public class TypefaceEditText extends AccentColorEditText {
+
+    private View.OnKeyListener keyPreImeListener = null;
 
     public TypefaceEditText(Context context) {
         super(context);
@@ -55,5 +60,17 @@ public class TypefaceEditText extends AccentColorEditText {
         if (!isInEditMode()) {
             setTypeface(TypefaceUtils.getTypeface(font));
         }
+    }
+
+    @Override
+    public boolean onKeyPreIme(int keyCode, KeyEvent event) {
+        if (keyPreImeListener != null) {
+            keyPreImeListener.onKey(this, keyCode, event);
+        }
+        return super.onKeyPreIme(keyCode, event);
+    }
+
+    public void setOnKeyPreImeListener(View.OnKeyListener listener) {
+        keyPreImeListener = listener;
     }
 }

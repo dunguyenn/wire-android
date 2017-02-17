@@ -134,4 +134,5 @@
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__send_timed">\uE735</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__keyboard_timed">\uE736</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__emoji_timed">\uE737</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__dismiss">\uE262</string>
 </resources>

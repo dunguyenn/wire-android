@@ -23,7 +23,7 @@ import android.support.v4.app.FragmentManager
 import android.support.v7.widget.RecyclerView.State
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
 import android.text.{Editable, TextWatcher}
-import android.view.View.{OnClickListener, OnLayoutChangeListener}
+import android.view.View.{OnClickListener, OnFocusChangeListener, OnLayoutChangeListener}
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
@@ -158,7 +158,12 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     })
     searchRecyclerView.setAdapter(searchAdapter)
 
-    controller.contentSearchQuery.currentValue.foreach(q => searchBoxView.setText(q.originalString))
+    controller.contentSearchQuery.currentValue.foreach{q =>
+      if (q.originalString.nonEmpty) {
+        searchBoxView.setText(q.originalString)
+        searchBoxHint.setVisibility(View.GONE)
+      }
+    }
     searchBoxView.addTextChangedListener(new TextWatcher {
       override def beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int): Unit = {}
 
@@ -168,6 +173,11 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         } else {
           controller.contentSearchQuery ! ContentSearchQuery(s.toString)
         }
+        if (s.toString.nonEmpty){
+          searchBoxClose.setVisibility(View.VISIBLE)
+        } else {
+          searchBoxClose.setVisibility(View.GONE)
+        }
       }
 
       override def afterTextChanged(s: Editable): Unit = {}
@@ -176,14 +186,34 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
         if (actionId == EditorInfo.IME_ACTION_DONE) {
           KeyboardUtils.closeKeyboardIfShown(getActivity)
+          searchBoxView.clearFocus()
         }
         true
+      }
+    })
+    searchBoxView.setOnKeyPreImeListener(new View.OnKeyListener(){
+      override def onKey(v: View, keyCode: Int, event: KeyEvent): Boolean = {
+        if (event.getAction == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK) {
+          v.clearFocus()
+        }
+        false
+      }
+    })
+    searchBoxView.setOnFocusChangeListener(new OnFocusChangeListener {
+      override def onFocusChange(v: View, hasFocus: Boolean): Unit = {
+        if (!hasFocus && searchBoxView.getText.length() == 0) {
+          searchBoxHint.setVisibility(View.VISIBLE)
+        } else {
+          searchBoxHint.setVisibility(View.GONE)
+        }
       }
     })
 
     searchBoxClose.setOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = {
         searchBoxView.setText("")
+        searchBoxView.clearFocus()
+        searchBoxHint.setVisibility(View.VISIBLE)
         KeyboardUtils.closeKeyboardIfShown(getActivity)
       }
     })
@@ -199,8 +229,6 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         collectionRecyclerView.setVisibility(View.GONE)
         searchRecyclerView.setVisibility(View.VISIBLE)
         timestamp.setVisibility(View.GONE)
-        searchBoxHint.setVisibility(View.GONE)
-        searchBoxClose.setVisibility(View.VISIBLE)
         emptyView.setVisibility(View.GONE)
       case (AdapterState(AllContent, 0, false), None, _) =>
         emptyView.setVisibility(View.VISIBLE)
@@ -208,8 +236,6 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         searchRecyclerView.setVisibility(View.GONE)
         setNavigationIconVisibility(false)
         timestamp.setVisibility(View.GONE)
-        searchBoxHint.setVisibility(View.VISIBLE)
-        searchBoxClose.setVisibility(View.GONE)
         noSearchResultsText.setVisibility(View.GONE)
       case (AdapterState(contentMode, _, _), None, _) =>
         emptyView.setVisibility(View.GONE)
@@ -217,8 +243,6 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         searchRecyclerView.setVisibility(View.GONE)
         setNavigationIconVisibility(contentMode != AllContent)
         timestamp.setVisibility(View.GONE)
-        searchBoxHint.setVisibility(View.VISIBLE)
-        searchBoxClose.setVisibility(View.GONE)
         noSearchResultsText.setVisibility(View.GONE)
       case _ =>
     }

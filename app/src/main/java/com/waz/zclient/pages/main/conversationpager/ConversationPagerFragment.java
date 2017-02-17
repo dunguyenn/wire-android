@@ -30,12 +30,14 @@ import com.waz.api.ConversationsList;
 import com.waz.api.IConversation;
 import com.waz.api.SyncState;
 import com.waz.api.Verification;
+import com.waz.zclient.BaseScalaActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.navigation.NavigationController;
 import com.waz.zclient.controllers.navigation.NavigationControllerObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.navigation.PagerControllerObserver;
+import com.waz.zclient.conversation.CollectionController;
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester;
 import com.waz.zclient.core.stores.conversation.ConversationStoreObserver;
 import com.waz.zclient.pages.BaseFragment;
@@ -291,11 +293,18 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
 
     @Override
     public void onPageVisible(Page page) {
+        if (page == Page.CONVERSATION_LIST) {
+            getCollectionController().clearSearch();
+        }
         if (page == Page.CONVERSATION_LIST &&
             getControllerFactory().getNavigationController()
                                   .getPagerPosition() == NavigationController.SECOND_PAGE) {
             conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
         }
+    }
+
+    private CollectionController getCollectionController() {
+        return ((BaseScalaActivity) getActivity()).injectJava(CollectionController.class);
     }
 
     @Override

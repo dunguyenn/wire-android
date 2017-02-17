@@ -249,15 +249,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 return;
             }
 
-            MenuInflater inflater = getActivity().getMenuInflater();
-            leftMenu.getMenu().clear();
-
-            boolean searchInProgress = !getCollectionController().contentSearchQuery().currentValue("").get().originalString().isEmpty();
-            if (searchInProgress) {
-                inflater.inflate(R.menu.conversation_header_menu_collection_searching, leftMenu.getMenu());
-            } else {
-                inflater.inflate(R.menu.conversation_header_menu_collection, leftMenu.getMenu());
-            }
+            inflateCollectionIcon();
 
             if (model.getType() == IConversation.Type.ONE_TO_ONE) {
                 toolbar.inflateMenu(R.menu.conversation_header_menu_video);
@@ -930,6 +922,18 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         }
     }
 
+    private void inflateCollectionIcon() {
+        MenuInflater inflater = getActivity().getMenuInflater();
+        leftMenu.getMenu().clear();
+
+        boolean searchInProgress = !getCollectionController().contentSearchQuery().currentValue("").get().originalString().isEmpty();
+        if (searchInProgress) {
+            inflater.inflate(R.menu.conversation_header_menu_collection_searching, leftMenu.getMenu());
+        } else {
+            inflater.inflate(R.menu.conversation_header_menu_collection, leftMenu.getMenu());
+        }
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////
     //
     //  Cursor callback
@@ -1070,7 +1074,7 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onPageVisible(Page page) {
         if (page == Page.MESSAGE_STREAM) {
-//            messagesListModelObserver.forceUpdate();
+            inflateCollectionIcon();
             cursorLayout.enableMessageWriting();
         }
     }
