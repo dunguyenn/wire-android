@@ -23,8 +23,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.{AttributeSet, TypedValue}
 import com.waz.api.Message
-import com.waz.content.MessageIndexStorage
-import com.waz.model.{MessageContent, MessageData}
+import com.waz.model.{MessageContent, MessageData, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -35,8 +34,6 @@ import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.{R, ViewHelper}
-
-import scala.util.Success
 
 class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends LinkTextView(context, attrs, style) with ViewHelper with ClickableViewPart with EphemeralPartView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -52,29 +49,33 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   registerEphemeral(this)
 
-  var part: Option[MessageContent] = None
+  var messagePart = Signal[Option[MessageContent]]()
   var accentColor = Color.TRANSPARENT
   accentColorController.accentColor{c => accentColor = c.getColor}
 
-  val animator = ValueAnimator.ofFloat(1, 0).setDuration(750)
+  val animator = ValueAnimator.ofFloat(1, 0).setDuration(1500)
   animator.addUpdateListener(new AnimatorUpdateListener {
     override def onAnimationUpdate(animation: ValueAnimator): Unit = {
-      val alpha = ((1 - animation.getAnimatedFraction) * 255).toInt
+      val alpha = Math.min(animation.getAnimatedValue.asInstanceOf[Float], 0.5f)
       setBackgroundColor(ColorUtils.injectAlpha(alpha, accentColor))
     }
   })
 
-  Signal(collectionController.focusedItem, collectionController.contentSearchQuery, message, accentColorController.accentColor).on(Threading.Ui) {
-    case (Some(searchedMessage), query, messageData, color) if query.originalString.nonEmpty && messageData.id.equals(searchedMessage.id) =>
-      implicit val executionContext = Threading.Ui
+  val messageSignal = for{
+    messageData <- message
+    part <- messagePart
+    searchedMessage <- collectionController.focusedItem
+    query <- collectionController.contentSearchQuery
+    color <- accentColorController.accentColor
+    normalizedMessage <- zms.flatMap(z => Signal.future(z.messagesIndexStorage.getNormalizedContentForMessage(searchedMessage.fold(MessageId())(_.id))))
+  } yield (messageData, part, searchedMessage, query, color, normalizedMessage)
+
+  messageSignal.on(Threading.Ui){
+    case (messageData, part, Some(searchedMessage), query, color, Some(normalizedMessage)) if query.originalString.nonEmpty && messageData.id.equals(searchedMessage.id) =>
       animator.start()
-      zms.head.flatMap(_.messagesIndexStorage.getNormalizedContentForMessage(searchedMessage.id)).onComplete{
-        case Success(Some(normalizedMessage)) =>
-          val spannable = CollectionUtils.getHighlightedSpannableString(messageData.contentString, normalizedMessage, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()))._1
-          setText(spannable)
-        case _ =>
-      }
-    case (_, _, messageData, _) =>
+      val spannable = CollectionUtils.getHighlightedSpannableString(messageData.contentString, normalizedMessage, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()))._1
+      setText(spannable)
+    case (messageData, part, _, _, _, _) =>
       setTextLink(part.fold(messageData.contentString)(_.content))
       setBackgroundColor(Color.TRANSPARENT)
     case _ =>
@@ -83,10 +84,10 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   }
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit = {
+    animator.end()
     super.set(msg, part, opts)
     setTextSize(TypedValue.COMPLEX_UNIT_PX, if (isEmojiOnly(msg.message, part)) textSizeEmoji else textSizeRegular)
-    setTextLink(part.fold(msg.message.contentString)(_.content))
-    this.part = part
+    messagePart ! part
   }
 
   def isEmojiOnly(msg: MessageData, part: Option[MessageContent]) =
